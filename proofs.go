@@ -7,6 +7,7 @@ package ffi
 // #include "./filcrypto.h"
 import "C"
 import (
+	logging "github.com/ipfs/go-log/v2"
 	"os"
 	"runtime"
 	"unsafe"
@@ -21,6 +22,8 @@ import (
 
 	"github.com/filecoin-project/filecoin-ffi/generated"
 )
+
+var log = logging.Logger("proofs")
 
 // VerifySeal returns true if the sealing operation from which its inputs were
 // derived was valid, and false if not.
@@ -559,16 +562,19 @@ func GenerateWindowPoSt(
 	privateSectorInfo SortedPrivateSectorInfo,
 	randomness abi.PoStRandomness,
 ) ([]proof.PoStProof, []abi.SectorNumber, error) {
+	log.Infof("DC proofs GenerateWindowPoSt 1")
 	filReplicas, filReplicasLen, free, err := toFilPrivateReplicaInfos(privateSectorInfo.Values(), "window")
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create private replica info array for FFI")
 	}
 	defer free()
 
+	log.Infof("DC proofs GenerateWindowPoSt 2")
 	proverID, err := toProverID(minerID)
 	if err != nil {
 		return nil, nil, err
 	}
+	log.Infof("DC proofs GenerateWindowPoSt 2.5")
 
 	resp := generated.FilGenerateWindowPost(to32ByteArray(randomness), filReplicas, filReplicasLen, proverID)
 	resp.Deref()
@@ -576,21 +582,22 @@ func GenerateWindowPoSt(
 	resp.Deref()
 
 	defer generated.FilDestroyGenerateWindowPostResponse(resp)
+	log.Infof("DC proofs GenerateWindowPoSt 2.7")
 
 	faultySectors, err := fromFilPoStFaultySectors(resp.FaultySectorsPtr, resp.FaultySectorsLen)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to parse faulty sectors list: %w", err)
 	}
-
+	log.Infof("DC proofs GenerateWindowPoSt 3")
 	if resp.StatusCode != generated.FCPResponseStatusFCPNoError {
 		return nil, faultySectors, errors.New(generated.RawString(resp.ErrorMsg).Copy())
 	}
-
+	log.Infof("DC proofs GenerateWindowPoSt 4")
 	proofs, err := fromFilPoStProofs(resp.ProofsPtr)
 	if err != nil {
 		return nil, nil, err
 	}
-
+	log.Infof("DC proofs GenerateWindowPoSt 5")
 	return proofs, faultySectors, nil
 }
 

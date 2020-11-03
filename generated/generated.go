@@ -9,13 +9,18 @@ package generated
 #include "../filcrypto.h"
 #include <stdlib.h>
 #include "cgo_helpers.h"
+
+ void Hello() {
+       printf("hello\n");
+   }
 */
 import "C"
 import (
 	"runtime"
 	"unsafe"
+	logging "github.com/ipfs/go-log/v2"
 )
-
+var log = logging.Logger("proofs")
 // FilAggregate function as declared in filecoin-ffi/filcrypto.h:289
 func FilAggregate(flattenedSignaturesPtr string, flattenedSignaturesLen uint) *FilAggregateResponse {
 	flattenedSignaturesPtr = safeString(flattenedSignaturesPtr)
@@ -291,7 +296,12 @@ func FilGenerateWindowPost(randomness Fil32ByteArray, replicasPtr []FilPrivateRe
 	creplicasPtr, creplicasPtrAllocMap := unpackArgSFilPrivateReplicaInfo(replicasPtr)
 	creplicasLen, creplicasLenAllocMap := (C.size_t)(replicasLen), cgoAllocsUnknown
 	cproverId, cproverIdAllocMap := proverId.PassValue()
+	log.Infof("DC proofs FilGenerateWindowPost 1",crandomness, creplicasPtr, creplicasLen, cproverId)
+	C.Hello()
+	log.Infof("DC hello 2")
 	__ret := C.fil_generate_window_post(crandomness, creplicasPtr, creplicasLen, cproverId)
+
+	log.Infof("DC proofs FilGenerateWindowPost 2")
 	runtime.KeepAlive(cproverIdAllocMap)
 	runtime.KeepAlive(creplicasLenAllocMap)
 	packSFilPrivateReplicaInfo(replicasPtr, creplicasPtr)

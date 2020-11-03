@@ -572,14 +572,16 @@ pub unsafe extern "C" fn fil_generate_window_post(
     catch_panic_response(|| {
         init_log();
 
-        info!("generate_window_post: start");
+        println!("generate_window_post: start");
 
         let mut response = fil_GenerateWindowPoStResponse::default();
+        println!("generate_window_post: start1");
+
 
         let result = to_private_replica_info_map(replicas_ptr, replicas_len).and_then(|rs| {
             filecoin_proofs_api::post::generate_window_post(&randomness.inner, &rs, prover_id.inner)
         });
-
+        println!("generate_window_post: start2");
         match result {
             Ok(output) => {
                 let mapped: Vec<fil_PoStProof> = output
@@ -622,7 +624,7 @@ pub unsafe extern "C" fn fil_generate_window_post(
             }
         }
 
-        info!("generate_window_post: finish");
+        println!("generate_window_post: finish");
 
         raw_ptr(response)
     })
